@@ -2,6 +2,7 @@ package dbmap
 
 import (
 	"dbmap/internal/config"
+	"dbmap/internal/report"
 	"fmt"
 	"github.com/coocood/freecache"
 	"github.com/google/gopacket"
@@ -27,8 +28,9 @@ type engine struct {
 	macSrc         net.HardwareAddr
 	macGw          net.HardwareAddr
 	in             chan string
-	out            chan string
-	domainCache    *freecache.Cache
+	out            chan report.Report
+	sendCache      *freecache.Cache
+	doneCache      *freecache.Cache
 	seq            uint32
 	iName          string
 	options        gopacket.SerializeOptions
@@ -36,21 +38,22 @@ type engine struct {
 	sendChan       chan pkInfo
 }
 
-func newEngine(ip string, port int, iName string, in chan string, out chan string) *engine {
+func newEngine(ip string, port int, iName string, in chan string, out chan report.Report) *engine {
 
 	p := &engine{
 		ipTestOutBound: ip,
 		portSrc:        layers.TCPPort(port),
 		in:             in,
 		out:            out,
-		domainCache:    freecache.NewCache(1024 * 1024),
+		sendCache:      freecache.NewCache(1024 * 1024),
+		doneCache:      freecache.NewCache(1024 * 1024),
 		seq:            1090024978,
 		iName:          iName,
 		sendChan:       make(chan pkInfo, 10),
 	}
 
 	fmt.Println("[+] running on ", iName)
-	ring, err := pcap.OpenLive(iName, 65536, false, 10)
+	ring, err := pcap.OpenLive(iName, 65536, false, 5)
 	ringSend, err := pcap.OpenLive(iName, 65536, false, 0)
 	if err != nil {
 		panic(err.Error())
@@ -147,12 +150,23 @@ func (this *engine) listen() {
 
 		for _, layerType := range foundLayerTypes {
 			if layerType == layers.LayerTypeTCP {
-				host, _ := this.domainCache.Get(i32tob(tcpLayer.Ack - 1))
-				if len(host) != 0 {
-					res :=  fmt.Sprintf("Host %s open %d", string(host), int(tcpLayer.SrcPort))
-					this.out <- res
+				host, err := this.sendCache.Get(i32tob(tcpLayer.Ack - 1))
+				if err != nil {
+					continue
 				}
+				_, err = this.doneCache.Get(append(host, []byte(strconv.Itoa(int(tcpLayer.SrcPort)))...))
+				if err == nil {
+					continue
+				}
+
+				res := report.Report{
+					Host: string(host),
+					Port: int(tcpLayer.SrcPort),
+				}
+				this.out <- res
+				this.doneCache.Set(append(host, []byte(strconv.Itoa(int(tcpLayer.SrcPort)))...), []byte{1}, 90)
 			}
+
 		}
 	}
 }
@@ -218,7 +232,7 @@ func (this *engine) worker(seq uint32) {
 			}
 			ip := dstaddrs[0].To4()
 			seq += 1
-			this.domainCache.Set(i32tob(seq), append([]byte(host)), 90)
+			this.sendCache.Set(i32tob(seq), append([]byte(host)), 120)
 			for _, port := range config.Conf.Ports {
 				this.sendChan <- pkInfo{
 					ip:   ip,

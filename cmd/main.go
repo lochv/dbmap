@@ -7,7 +7,7 @@ import (
 	"dbmap/internal/report"
 )
 
-func main()  {
+func main() {
 	revChan := receive.New()
 	rpChan := report.New()
 	db := dbmap.New(config.Conf.TestIp, config.Conf.SourcePort, config.Conf.Iface, revChan, rpChan)

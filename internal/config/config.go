@@ -13,6 +13,7 @@ type config struct {
 	TestIp      string `yaml:"test_ip,omitempty"`
 	SourcePort  int    `yaml:"source_port,omitempty"`
 	InputFile   string `yaml:"input_file,omitempty"`
+	OutputFile  string `yaml:"output_file,omitempty"`
 	Ports       []int  `yaml:"ports,omitempty"`
 }
 

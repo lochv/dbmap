@@ -1,11 +1,13 @@
 package dbmap
 
+import "dbmap/internal/report"
+
 type dbmap struct {
 	kill chan int
 	*engine
 }
 
-func New(ip string, port int, iName string, in chan string, out chan string) *dbmap {
+func New(ip string, port int, iName string, in chan string, out chan report.Report) *dbmap {
 	return &dbmap{
 		engine: newEngine(ip, port, iName, in, out),
 		kill:   make(chan int),
