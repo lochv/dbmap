@@ -1,4 +1,4 @@
-package report
+package dbio
 
 import (
 	"dbmap/internal/config"
@@ -9,10 +9,11 @@ import (
 
 type Report struct {
 	Host string `json:"host"`
+	Ip   string `json:"ip"`
 	Port int    `json:"port"`
 }
 
-func New() chan Report {
+func NewRp() chan Report {
 	in := make(chan Report, 32)
 	switch config.Conf.ReportMode {
 	case "console":

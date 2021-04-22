@@ -1,4 +1,4 @@
-package receive
+package dbio
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func New() chan string {
+func NewRecv() chan string {
 	outChan := make(chan string, 16)
 	switch config.Conf.ReceiveMode {
 	case "file":

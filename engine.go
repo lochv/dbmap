@@ -2,7 +2,7 @@ package dbmap
 
 import (
 	"dbmap/internal/config"
-	"dbmap/internal/report"
+	"dbmap/internal/dbio"
 	"fmt"
 	"github.com/coocood/freecache"
 	"github.com/google/gopacket"
@@ -28,7 +28,7 @@ type engine struct {
 	macSrc         net.HardwareAddr
 	macGw          net.HardwareAddr
 	in             chan string
-	out            chan report.Report
+	out            chan dbio.Report
 	sendCache      *freecache.Cache
 	doneCache      *freecache.Cache
 	seq            uint32
@@ -38,7 +38,7 @@ type engine struct {
 	sendChan       chan pkInfo
 }
 
-func newEngine(ip string, port int, iName string, in chan string, out chan report.Report) *engine {
+func newEngine(ip string, port int, iName string, in chan string, out chan dbio.Report) *engine {
 
 	p := &engine{
 		ipTestOutBound: ip,
@@ -159,8 +159,9 @@ func (this *engine) listen() {
 					continue
 				}
 
-				res := report.Report{
+				res := dbio.Report{
 					Host: string(host),
+					Ip:   ipLayer.SrcIP.String(),
 					Port: int(tcpLayer.SrcPort),
 				}
 				this.out <- res

@@ -1,7 +1,7 @@
 workers: 1000
-iface: eth0
+iface: ens33
 receive_mode: file # file, remote, console
-report_mode: console # file, remote, console
+report_mode: file # file, remote, console
 test_ip: 8.8.8.8
 source_port: 54953
 input_file: ./input.txt
