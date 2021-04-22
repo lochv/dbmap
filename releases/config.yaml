@@ -1,5 +1,5 @@
 workers: 1000
-iface: ens33
+iface: eth0
 receive_mode: file # file, remote, console
 report_mode: file # file, remote, console
 test_ip: 8.8.8.8
